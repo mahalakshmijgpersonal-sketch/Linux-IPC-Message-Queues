@@ -21,9 +21,66 @@ Execute the C Program for the desired output.
 # PROGRAM:
 
 ## C program that receives a message from message queue and display them
+sender
+```
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 
+int main()
+{
+    int fd;
+    char *myfifo = "/tmp/myfifo";
+    char msg[] = "Hello from Writer Process";
 
+    mkfifo(myfifo, 0666);
 
+    fd = open(myfifo, O_WRONLY);
+
+    write(fd, msg, strlen(msg)+1);
+
+    printf("Message Sent\n");
+
+    close(fd);
+
+    return 0;
+}
+```
+receiver
+```#include <stdio.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
+struct msg_buffer {
+    long msg_type;
+    char msg_text[100];
+};
+
+int main() {
+    key_t key;
+    int msgid;
+    struct msg_buffer message;
+
+    // Generate unique key
+    key = ftok("progfile", 65);
+
+    // Access message queue
+    msgid = msgget(key, 0666 | IPC_CREAT);
+
+    // Receive message
+    msgrcv(msgid, &message, sizeof(message.msg_text), 1, 0);
+
+    // Display message
+    printf("Message received: %s\n", message.msg_text);
+
+    // Destroy message queue
+    msgctl(msgid, IPC_RMID, NULL);
+
+    return 0;
+}
+```
 
 
 ## OUTPUT
